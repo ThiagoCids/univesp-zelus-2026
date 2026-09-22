@@ -1,0 +1,32 @@
+# =============================================================
+# Arquivo: .gitattributes  —  Configuração de Fim de Linha
+# =============================================================
+# Este arquivo instrui o Git a normalizar os finais de linha
+# automaticamente, evitando conflitos entre Windows (CRLF)
+# e Linux/Mac (LF) quando a equipe usa sistemas diferentes.
+#
+# "text=auto" deixa o Git decidir o melhor para cada arquivo.
+# "eol=lf" força LF nos arquivos de código (padrão universal).
+# =============================================================
+
+# Normalização automática para todos os arquivos de texto
+* text=auto
+
+# Força LF para arquivos de código e configuração
+*.js      text eol=lf
+*.jsx     text eol=lf
+*.scss    text eol=lf
+*.css     text eol=lf
+*.json    text eol=lf
+*.md      text eol=lf
+*.html    text eol=lf
+*.env*    text eol=lf
+*.gitignore text eol=lf
+
+# Arquivos binários — não normalizar
+*.png     binary
+*.jpg     binary
+*.jpeg    binary
+*.gif     binary
+*.ico     binary
+*.svg     binary

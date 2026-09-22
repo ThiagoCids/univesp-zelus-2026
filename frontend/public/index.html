@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<!--
+  ==============================================================
+  Arquivo: index.html  —  HTML Base do Frontend ZELUS
+  ==============================================================
+  Este arquivo é o "esqueleto" da página web. O React vai injetar
+  toda a interface dinamicamente dentro da <div id="root">.
+  Você raramente vai precisar editar este arquivo diretamente.
+  ==============================================================
+-->
+<html lang="pt-BR">
+  <head>
+    <!-- Define a codificação de caracteres para suportar acentos e ç -->
+    <meta charset="utf-8" />
+
+    <!-- Garante que a página ocupe 100% da largura em celulares -->
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Cor da barra de status no celular (Android/Chrome) -->
+    <meta name="theme-color" content="#1a73e8" />
+
+    <!-- Descrição do sistema para motores de busca e acessibilidade -->
+    <meta
+      name="description"
+      content="ZELUS — Sistema de Zeladoria Urbana para Cidades Inteligentes"
+    />
+
+    <!-- Título que aparece na aba do navegador -->
+    <title>ZELUS — Zeladoria Urbana</title>
+  </head>
+  <body>
+    <!-- Mensagem exibida se o JavaScript estiver desabilitado no navegador -->
+    <noscript>
+      Você precisa habilitar o JavaScript para usar o sistema ZELUS.
+    </noscript>
+
+    <!--
+      div#root — Ponto de Montagem do React
+      ======================================
+      O React encontra este elemento e injeta toda a aplicação aqui.
+      É como um "slot" onde o React encaixa a interface completa.
+    -->
+    <div id="root"></div>
+  </body>
+</html>

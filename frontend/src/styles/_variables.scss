@@ -1,0 +1,85 @@
+// ==============================================================
+// Arquivo: _variables.scss  —  Variáveis de Design do ZELUS
+// ==============================================================
+// Este é um arquivo "parcial" do SCSS (note o underscore no nome).
+// Arquivos parciais não geram CSS por si sós — eles são importados
+// por outros arquivos SCSS usando "@use" ou "@import".
+//
+// Aqui ficam todas as "constantes de design" do sistema:
+// cores, fontes, tamanhos, espaçamentos e breakpoints.
+// Centralizar aqui facilita mudanças visuais em todo o projeto.
+//
+// ATENÇÃO: Este arquivo ainda não contém valores funcionais.
+// Ele serve como esqueleto documentado para a próxima etapa.
+// ==============================================================
+
+// ==============================================================
+// PALETA DE CORES
+// Baseada na identidade visual do sistema ZELUS.
+// ==============================================================
+
+// -- Cores Primárias --
+// $cor-primaria:       #1a73e8;  // Azul principal (botões, links, destaques)
+// $cor-primaria-hover: #1558b0;  // Azul mais escuro para estado hover
+// $cor-secundaria:     #34a853;  // Verde (status positivo, confirmações)
+
+// -- Cores de Alerta / Status --
+// $cor-alerta:         #fbbc04;  // Amarelo (avisos, pendências)
+// $cor-erro:           #ea4335;  // Vermelho (erros, ocorrências críticas)
+// $cor-sucesso:        #34a853;  // Verde (sucesso, resolvido)
+
+// -- Cores Neutras --
+// $cor-fundo:          #f8f9fa;  // Cinza muito claro (fundo das páginas)
+// $cor-fundo-card:     #ffffff;  // Branco (fundo de cards e painéis)
+// $cor-texto:          #202124;  // Quase preto (texto principal)
+// $cor-texto-suave:    #5f6368;  // Cinza médio (texto secundário, legendas)
+// $cor-borda:          #dadce0;  // Cinza claro (bordas de elementos)
+
+// ==============================================================
+// TIPOGRAFIA
+// ==============================================================
+
+// $fonte-padrao:  'Inter', sans-serif;  // Fonte principal da aplicação
+// $fonte-codigo:  'Courier New', monospace; // Fonte para trechos de código
+
+// -- Tamanhos de Fonte (escala tipográfica) --
+// $fonte-xs:   0.75rem;  // 12px — labels e legendas pequenas
+// $fonte-sm:   0.875rem; // 14px — texto de suporte
+// $fonte-md:   1rem;     // 16px — texto de corpo (padrão)
+// $fonte-lg:   1.125rem; // 18px — subtítulos
+// $fonte-xl:   1.25rem;  // 20px — títulos de seção
+// $fonte-2xl:  1.5rem;   // 24px — títulos de página
+// $fonte-3xl:  2rem;     // 32px — títulos de destaque (hero)
+
+// ==============================================================
+// ESPAÇAMENTOS
+// Usa a escala de 4px para manter harmonia visual.
+// ==============================================================
+
+// $espacamento-xs:  0.25rem;  // 4px
+// $espacamento-sm:  0.5rem;   // 8px
+// $espacamento-md:  1rem;     // 16px
+// $espacamento-lg:  1.5rem;   // 24px
+// $espacamento-xl:  2rem;     // 32px
+// $espacamento-2xl: 3rem;     // 48px
+
+// ==============================================================
+// BREAKPOINTS DE RESPONSIVIDADE
+// Definem em qual largura de tela o layout muda.
+// ==============================================================
+
+// $bp-mobile:  480px;   // Celulares pequenos
+// $bp-tablet:  768px;   // Tablets e celulares grandes
+// $bp-desktop: 1024px;  // Desktops e notebooks
+// $bp-wide:    1280px;  // Telas grandes
+
+// ==============================================================
+// BORDAS E SOMBRAS
+// ==============================================================
+
+// $borda-raio:    8px;   // Arredondamento padrão dos elementos
+// $borda-raio-lg: 16px;  // Arredondamento maior (cards, modais)
+
+// $sombra-sm: 0 1px 3px rgba(0, 0, 0, 0.1);  // Sombra sutil
+// $sombra-md: 0 4px 6px rgba(0, 0, 0, 0.1);  // Sombra média (cards)
+// $sombra-lg: 0 10px 15px rgba(0, 0, 0, 0.1); // Sombra grande (modais)

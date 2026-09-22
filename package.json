@@ -1,0 +1,10 @@
+{
+  "name": "zelus-monorepo",
+  "version": "1.0.0",
+  "description": "ZELUS - Sistema de Zeladoria Urbana para Cidades Inteligentes (Projeto UNIVESP)",
+  "private": true,
+  "scripts": {
+    "dev:backend": "npm run dev --prefix backend",
+    "dev:frontend": "npm start --prefix frontend"
+  }
+}

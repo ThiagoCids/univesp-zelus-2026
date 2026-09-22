@@ -1,0 +1,24 @@
+# ==============================================================
+# Arquivo: .gitignore  —  Backend ZELUS
+# ==============================================================
+# Lista de arquivos e pastas que o Git deve IGNORAR (não versionar).
+# Isso protege dados sensíveis e evita enviar arquivos desnecessários.
+# ==============================================================
+
+# -- Dependências do Node.js --
+# A pasta node_modules contém milhares de arquivos baixados pelo npm.
+# Não deve ser versionada; cada dev roda "npm install" para criá-la.
+node_modules/
+
+# -- Arquivo de variáveis de ambiente reais --
+# O .env contém senhas e chaves secretas. NUNCA deve ir para o Git!
+# Use o .env.example como modelo.
+.env
+
+# -- Logs gerados pelo Node.js e npm --
+*.log
+npm-debug.log*
+
+# -- Pasta de build/dist (se gerada) --
+dist/
+build/

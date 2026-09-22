@@ -1,0 +1,71 @@
+// ==============================================================
+// Arquivo: global.scss  —  Estilos Globais do ZELUS
+// ==============================================================
+// Este arquivo SCSS é importado uma única vez (em index.js) e
+// seus estilos se aplicam a TODA a aplicação.
+//
+// Estrutura deste arquivo:
+//   1. Importação de variáveis e fontes
+//   2. Reset CSS (zera estilos padrão inconsistentes do navegador)
+//   3. Estilos base do body e elementos tipográficos
+//   4. Classes utilitárias globais
+//
+// ATENÇÃO: Este arquivo ainda não contém estilos funcionais.
+// Ele serve como esqueleto documentado para a próxima etapa.
+// ==============================================================
+
+// -- 1. Importação das variáveis de design --
+// O "@use" importa o arquivo _variables.scss e o torna disponível
+// aqui com o namespace "vars" (ex: vars.$cor-primaria).
+// @use './variables' as vars;
+
+// -- Importação de fonte do Google Fonts --
+// A diretiva @import no SCSS permite importar folhas de estilo externas.
+// @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+// ==============================================================
+// 2. RESET CSS
+// Zera margens, paddings e comportamentos inconsistentes entre
+// diferentes navegadores (Chrome, Firefox, Safari, Edge...).
+// ==============================================================
+
+// *, *::before, *::after {
+//   /* Remove a margem padrão de todos os elementos */
+//   margin: 0;
+//
+//   /* Remove o padding padrão de todos os elementos */
+//   padding: 0;
+//
+//   /* Faz o padding e border serem incluídos no tamanho total do elemento */
+//   box-sizing: border-box;
+// }
+
+// ==============================================================
+// 3. ESTILOS BASE DO BODY E TIPOGRAFIA
+// ==============================================================
+
+// body {
+//   /* Define a fonte principal de toda a aplicação */
+//   font-family: 'Inter', sans-serif;
+//
+//   /* Cor de fundo padrão da aplicação */
+//   background-color: vars.$cor-fundo;
+//
+//   /* Cor do texto padrão */
+//   color: vars.$cor-texto;
+//
+//   /* Melhora a renderização das fontes */
+//   -webkit-font-smoothing: antialiased;
+// }
+
+// ==============================================================
+// 4. CLASSES UTILITÁRIAS GLOBAIS
+// Pequenas classes de uso geral reutilizáveis em toda a aplicação
+// ==============================================================
+
+// .container {
+//   /* Limita a largura máxima do conteúdo e centraliza na página */
+//   max-width: 1200px;
+//   margin: 0 auto;
+//   padding: 0 vars.$espacamento-md;
+// }

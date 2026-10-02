@@ -42,6 +42,10 @@ app.use(express.json());
 // ROTAS
 // ==============================================================
 
+// -- Rotas de Categorias --
+const categoriaRoutes = require('./routes/categoriaRoutes');
+app.use('/api/categorias', categoriaRoutes);
+
 // -- Rota de Saúde (Health Check) --
 // Endpoint de teste para confirmar que o servidor está no ar.
 // Acesse: GET http://localhost:3001/api/status

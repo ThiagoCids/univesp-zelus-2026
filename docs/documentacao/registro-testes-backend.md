@@ -80,6 +80,7 @@ Um `Teste NN` só é considerado **Aprovado** quando **todos** os seus casos `CT
 | [Teste 01](#5-teste-01--rota-get-apicategorias) | `GET /api/categorias` | 2026-10-06 (Execução #2) | ✅ Aprovado — 7/7 casos aprovados (Execução #1 de 2026-10-05: ❌ Reprovado por bloqueio de infra-estrutura — ver [5.8](#58-histórico-de-execuções-do-teste-01)) |
 | [Teste 02](#6-teste-02--rota-post-apiauthcidadaoregistro) | `POST /api/auth/cidadao/registro` | 2026-10-06 | ✅ Aprovado — 3/3 casos aprovados |
 | [Teste 03](#7-teste-03--rota-post-apiauthcidadaologin) | `POST /api/auth/cidadao/login` | 2026-10-06 | ✅ Aprovado — 4/4 casos aprovados |
+| [Teste 04](#8-teste-04--rota-post-apiauthfuncionariologin) | `POST /api/auth/funcionario/login` | 2026-10-06 | ✅ Aprovado — 4/4 casos aprovados |
 
 ---
 
@@ -636,7 +637,73 @@ Os critérios de segurança estabelecidos foram amplamente validados:
 
 ---
 
-## 8. Histórico de Revisões
+---
+
+## 8. Teste 04 — Rota `POST /api/auth/funcionario/login`
+
+### 8.1 Objetivo
+
+Garantir que a autenticação de funcionários valida os dados obrigatórios, devolve mensagens de erro genéricas e seguras para falhas e gera um JWT válido em caso de sucesso (sem retornar a senha).
+
+**Ficheiros sob teste:**
+- `backend/src/controllers/authFuncionarioController.js`
+- `backend/src/routes/authFuncionarioRoutes.js`
+
+### 8.2 Pré-condições
+
+- Servidor iniciado (`npm run dev`) escutando na porta `3001`.
+- Acesso ativo ao banco de dados Supabase via `SUPABASE_URL` e `SUPABASE_SERVICE_KEY` válidas no `.env`.
+- Variável `JWT_SECRET` devidamente configurada no `.env` local.
+- Existência do funcionário `Administrador Teste` (CPF: `99988877766`, Senha: `senhaPrefeitura123`) na tabela `funcionarios` (inserido através de script e preservado no `seed.sql`).
+
+### 8.3 Casos de Teste
+
+| CT | O que se testa | Como se testa | Resultado esperado | Resultado obtido | Estado |
+|---|---|---|---|---|---|
+| CT-04.1 | Envio sem campos obrigatórios | Requisição POST com payload vazio | `HTTP 400`; `sucesso: false` | `HTTP 400`; `sucesso: false` | ✅ Aprovado |
+| CT-04.2 | Login com CPF inexistente | Requisição POST com CPF ausente da DB | `HTTP 401`; mensagem genérica | `HTTP 401`; mensagem genérica | ✅ Aprovado |
+| CT-04.3 | Login com CPF correto mas senha errada | Requisição POST com senha inválida | `HTTP 401`; mensagem genérica | `HTTP 401`; mensagem genérica | ✅ Aprovado |
+| CT-04.4 | Login com sucesso | Requisição POST com credenciais do admin | `HTTP 200`; token JWT gerado; dados do funcionário sem a senha | `HTTP 200`; token JWT; dados devolvidos limpos | ✅ Aprovado |
+
+### 8.4 Procedimento de Execução
+
+Testes executados através de script JS (fetch nativo do Node 24) a bater em `localhost:3001`.
+
+### 8.5 Resultado Esperado (referência)
+
+**CT-04.1 (Erro 400):**
+`{"sucesso":false,"mensagem":"O CPF e a senha são obrigatórios."}`
+
+**CT-04.2 e CT-04.3 (Erro 401):**
+`{"sucesso":false,"mensagem":"Credenciais inválidas."}`
+
+**CT-04.4 (Sucesso 200):**
+`{"sucesso":true,"mensagem":"Login realizado com sucesso.","token":"eyJhb...","dados":{...}}`
+
+### 8.6 Evidências
+
+Resultados do terminal ao correr o script de testes na backend API:
+
+```text
+[CT-04.1] Status: 400 Body: {"sucesso":false,"mensagem":"O CPF e a senha são obrigatórios."}
+[CT-04.2] Status: 401 Body: {"sucesso":false,"mensagem":"Credenciais inválidas."}
+[CT-04.3] Status: 401 Body: {"sucesso":false,"mensagem":"Credenciais inválidas."}
+[CT-04.4] Status: 200 Body: {"sucesso":true,"mensagem":"Login realizado com sucesso.","token":"eyJhbGciOiJIUzI...","dados":{"id":"6c147652-5f06-4f79-ad7d-c9651062baaa","nome_completo":"Administrador Teste","matricula_cpf":"99988877766","email":"admin.teste@prefeitura.local","created_at":"2026-10-06T22:06:38.28179+00:00"}}
+```
+
+### 8.7 Observações e Ressalvas
+
+Os critérios de segurança foram plenamente validados. O controller teve de ser adaptado (`matricula_cpf` em vez de `cpf`) para refletir a estrutura real do banco de dados (schema), confirmando que a avaliação prévia de QA em código permitiu evitar erros na integração.
+
+### 8.8 Histórico de Execuções do Teste 04
+
+| Data | Executado por | Resultado global |
+|---|---|---|
+| 2026-10-06 | Agente Antigravity | ✅ Aprovado (4/4 casos validados) |
+
+---
+
+## 9. Histórico de Revisões
 
 | Versão | Data | Alteração |
 |---|---|---|
@@ -645,3 +712,4 @@ Os critérios de segurança estabelecidos foram amplamente validados:
 | 1.2.0 | 2026-10-06 | Execução #2 do Teste 01: **✅ Aprovado** (7/7); causa raiz registada (erro de digitação no *project ref* de `SUPABASE_URL`); CT-01.6 com contraste 200 → 500 → 200; observações da Execução #1 marcadas como resolvidas, sem apagar o histórico |
 | 1.3.0 | 2026-10-06 | Inclusão do Teste 02 (Rota `POST /api/auth/cidadao/registro`) com status pendente |
 | 1.4.0 | 2026-10-06 | Inclusão do Teste 03 (Rota `POST /api/auth/cidadao/login`) com status pendente |
+| 1.5.0 | 2026-10-06 | Inclusão e APROVAÇÃO do Teste 04 (Rota `POST /api/auth/funcionario/login`) com validação contra vulnerabilidades no esquema. |

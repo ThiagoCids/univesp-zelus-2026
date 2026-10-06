@@ -1,4 +1,4 @@
-﻿-- =============================================================================
+-- =============================================================================
 -- ZELUS - Seed de Dados: Categorias e Subcategorias
 -- Arquivo  : backend/src/database/seed.sql
 -- Proposito: Popula as tabelas de dominio com os dados reais da regra de negocio.
@@ -91,6 +91,18 @@ BEGIN
         'Tampa quebrada / sem tampa'
     );
 
-    RAISE NOTICE 'Seed concluido com sucesso: 2 categorias e 3 subcategorias inseridas.';
+    -- =========================================================================
+    -- BLOCO 4: Insert de Funcionário de Teste
+    -- =========================================================================
+    INSERT INTO public.funcionarios (nome_completo, matricula_cpf, email, senha)
+    VALUES (
+        'Administrador Teste',
+        '99988877766',
+        'admin.teste@prefeitura.local',
+        '$2a$10$3m/1j/Z1E0n2Cg15S8t5Q.K7.T32O/h74fO9Gq5B4vEwG/N18a3/e' -- Hash bcrypt ficticio de "senhaPrefeitura123"
+    )
+    ON CONFLICT (matricula_cpf) DO NOTHING;
+
+    RAISE NOTICE 'Seed concluido com sucesso: 2 categorias, 3 subcategorias e 1 funcionário inseridos.';
 
 END $$;

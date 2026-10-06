@@ -50,6 +50,10 @@ app.use('/api/categorias', categoriaRoutes);
 const authCidadaoRoutes = require('./routes/authCidadaoRoutes');
 app.use('/api/auth/cidadao', authCidadaoRoutes);
 
+// -- Rotas de Autenticação (Funcionário) --
+const authFuncionarioRoutes = require('./routes/authFuncionarioRoutes');
+app.use('/api/auth/funcionario', authFuncionarioRoutes);
+
 // -- Rota de Saúde (Health Check) --
 // Endpoint de teste para confirmar que o servidor está no ar.
 // Acesse: GET http://localhost:3001/api/status

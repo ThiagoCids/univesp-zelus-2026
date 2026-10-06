@@ -81,6 +81,7 @@ Um `Teste NN` só é considerado **Aprovado** quando **todos** os seus casos `CT
 | [Teste 02](#6-teste-02--rota-post-apiauthcidadaoregistro) | `POST /api/auth/cidadao/registro` | 2026-10-06 | ✅ Aprovado — 3/3 casos aprovados |
 | [Teste 03](#7-teste-03--rota-post-apiauthcidadaologin) | `POST /api/auth/cidadao/login` | 2026-10-06 | ✅ Aprovado — 4/4 casos aprovados |
 | [Teste 04](#8-teste-04--rota-post-apiauthfuncionariologin) | `POST /api/auth/funcionario/login` | 2026-10-06 | ✅ Aprovado — 4/4 casos aprovados |
+| [Teste 05](#10-teste-05--rota-get-apicategorias-protegida) | `GET /api/categorias` | 2026-10-06 | ✅ Aprovado — 3/3 casos aprovados |
 
 ---
 
@@ -713,3 +714,25 @@ Os critérios de segurança foram plenamente validados. O controller teve de ser
 | 1.3.0 | 2026-10-06 | Inclusão do Teste 02 (Rota `POST /api/auth/cidadao/registro`) com status pendente |
 | 1.4.0 | 2026-10-06 | Inclusão do Teste 03 (Rota `POST /api/auth/cidadao/login`) com status pendente |
 | 1.5.0 | 2026-10-06 | Inclusão e APROVAÇÃO do Teste 04 (Rota `POST /api/auth/funcionario/login`) com validação contra vulnerabilidades no esquema. |
+| 1.6.0 | 2026-10-06 | Inclusão e APROVAÇÃO do Teste 05 (Rota GET `/api/categorias` protegida). |
+
+---
+
+## 10. Teste 05 — Rota GET /api/categorias (Protegida)
+
+### Objetivo
+Validar que a rota de categorias (Menu de Problemas) está devidamente protegida pelo middleware de autenticação e que retorna corretamente a estrutura hierárquica (categorias e subcategorias) apenas para pedidos autorizados.
+
+### Casos de Teste
+
+- **CT-05.1**: Acesso à rota sem token no header `Authorization`.
+  - **Status**: ✅ Aprovado
+  - **Esperado**: Código HTTP `401 Unauthorized` com JSON `{ sucesso: false, mensagem: 'Acesso negado. Token não fornecido.' }`.
+
+- **CT-05.2**: Acesso com token inválido ou forjado.
+  - **Status**: ✅ Aprovado
+  - **Esperado**: Código HTTP `401 Unauthorized` com JSON `{ sucesso: false, mensagem: 'Token inválido ou expirado.' }`.
+
+- **CT-05.3**: Acesso com token válido no header `Authorization: Bearer <token>`.
+  - **Status**: ✅ Aprovado
+  - **Esperado**: Código HTTP `200 OK` com JSON `{ sucesso: true, dados: [...] }`, onde `dados` representa a árvore de categorias com as suas respetivas subcategorias.

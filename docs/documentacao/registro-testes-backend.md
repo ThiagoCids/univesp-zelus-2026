@@ -1,0 +1,515 @@
+# Registo Oficial de Testes — Backend ZELUS
+
+**Tipo de documento:** Documento vivo (*living document*)  
+**Versão:** 1.2.0  
+**Última actualização:** 2026-10-06  
+**Responsável:** Thiago Cid  
+**Projecto:** ZELUS — Projecto Integrador UNIVESP 2026
+
+---
+
+## 1. Introdução
+
+Este documento é o **registo único, oficial e cumulativo** de todos os testes realizados sobre o backend da API ZELUS.
+
+Princípios do registo:
+
+- **Cobertura progressiva:** cada nova rota da API recebe uma secção própria (`Teste NN`) antes de ser consumida pelo frontend.
+- **Rastreabilidade:** cada caso de teste regista *o que* se testa, *como* se testa, *o que se espera* e *o que se obteve*, com evidências reais.
+- **Imutabilidade do histórico:** resultados anteriores nunca são apagados. Reexecuções acrescentam novas entradas no histórico do respectivo teste e no [Histórico de Revisões](#7-histórico-de-revisões).
+- **Base para automação:** cada caso de teste manual está escrito de forma a poder ser convertido, no futuro, num teste automatizado (ex.: Jest + Supertest).
+
+---
+
+## 2. Metodologia
+
+### 2.1 Tipo de teste
+
+**Testes manuais de integração, em caixa-preta.** As requisições HTTP são feitas ao servidor Express real, que por sua vez consulta a base de dados Supabase real, populada com os dados do seed oficial (`08-seed-categorias`). Não são usados *mocks*.
+
+### 2.2 Nomenclatura
+
+| Identificador | Significado | Exemplo |
+|---|---|---|
+| `Teste NN` | Conjunto de testes de uma rota/funcionalidade | `Teste 01` |
+| `CT-NN.X` | Caso de teste individual dentro do conjunto | `CT-01.3` |
+
+### 2.3 Estrutura de cada caso de teste
+
+1. **O que se testa** — o comportamento ou a propriedade a verificar.
+2. **Como se testa** — o comando exacto (reprodutível) usado.
+3. **Resultado esperado** — o critério objectivo de aprovação.
+4. **Resultado obtido** — a saída real observada na execução.
+
+### 2.4 Estados possíveis
+
+| Estado | Significado |
+|---|---|
+| ⏳ Pendente | Ainda não executado |
+| ✅ Aprovado | Resultado obtido = resultado esperado |
+| ❌ Reprovado | Resultado obtido diverge do esperado |
+| ⚠️ Aprovado com ressalvas | Passou, mas foi identificado um risco ou ponto de melhoria |
+| 🚫 Bloqueado | Não pôde ser avaliado porque uma pré-condição falhou (ex.: infra-estrutura indisponível) |
+
+### 2.5 Critério de aprovação de um Teste
+
+Um `Teste NN` só é considerado **Aprovado** quando **todos** os seus casos `CT-NN.X` estão aprovados (✅ ou ⚠️).
+
+---
+
+## 3. Ambiente de Testes
+
+| Item | Valor |
+|---|---|
+| Sistema Operativo / Shell | Windows / PowerShell |
+| Node.js | v24.20.0 |
+| PowerShell | Windows PowerShell 5.1.19041.6456 |
+| nodemon | 3.1.14 |
+| Base URL | `http://localhost:3001` |
+| Base de dados | Supabase PostgreSQL (schema `06` + RLS `07` + seed `08`) |
+| Cliente Supabase usado pela rota | `supabaseClient` (anon key) |
+
+> **Nota sobre o PowerShell:** no Windows PowerShell, `curl` é um *alias* de `Invoke-WebRequest`. Para usar o curl real, os comandos deste documento usam explicitamente `curl.exe`. Para inspecção estruturada do JSON, usa-se `Invoke-RestMethod`.
+
+---
+
+## 4. Sumário de Testes
+
+| ID | Rota / Funcionalidade | Data de execução | Estado |
+|---|---|---|---|
+| [Teste 01](#5-teste-01--rota-get-apicategorias) | `GET /api/categorias` | 2026-10-06 (Execução #2) | ✅ Aprovado — 7/7 casos aprovados (Execução #1 de 2026-10-05: ❌ Reprovado por bloqueio de infra-estrutura — ver [5.8](#58-histórico-de-execuções-do-teste-01)) |
+
+---
+
+## 5. Teste 01 — Rota `GET /api/categorias`
+
+### 5.1 Objetivo
+
+Validar que a rota devolve todas as categorias com as respectivas subcategorias aninhadas, no envelope padrão `{ sucesso, dados }`, ordenadas alfabeticamente, apenas com as colunas explicitamente seleccionadas, através do cliente com permissões públicas (RLS) — e que, em caso de falha da base de dados, o erro é tratado de forma controlada.
+
+**Ficheiros sob teste:**
+
+- `backend/src/server.js` (registo da rota)
+- `backend/src/routes/categoriaRoutes.js`
+- `backend/src/controllers/categoriaController.js`
+- `backend/src/config/supabase.js`
+
+### 5.2 Pré-condições
+
+- Seed `08` aplicado no Supabase (2 categorias, 3 subcategorias).
+- `backend/.env` com `SUPABASE_URL`, `SUPABASE_SERVICE_KEY` e `SUPABASE_ANON_KEY` preenchidas.
+- Servidor iniciado com `npm run dev` (pasta `backend`) e a escutar na porta `3001`.
+
+### 5.3 Casos de Teste
+
+> **Estado actual — Execução #2 (2026-10-06).** Os resultados da Execução #1 (2026-10-05) estão preservados nas [Evidências](#56-evidências) e no [Histórico de Execuções](#58-histórico-de-execuções-do-teste-01).
+
+| CT | O que se testa | Como se testa | Resultado esperado | Resultado obtido | Estado |
+|---|---|---|---|---|---|
+| CT-01.0 | A anon key está definida (garante que o RLS é realmente exercido) | `Select-String -Path backend\.env -Pattern '^SUPABASE_ANON_KEY=.+' -Quiet` | `True` | `True` | ✅ Aprovado |
+| CT-01.1 | O servidor está no ar | `Invoke-RestMethod http://localhost:3001/api/status` | `status = ok`, `projeto = ZELUS` | `status = ok`, `projeto = ZELUS`, `ambiente = development` | ✅ Aprovado |
+| CT-01.2 | Status HTTP e cabeçalho da resposta | `curl.exe -i http://localhost:3001/api/categorias` | `HTTP/1.1 200 OK` e `Content-Type: application/json` | `HTTP/1.1 200 OK`; `Content-Type: application/json; charset=utf-8`; `Content-Length: 610` | ✅ Aprovado |
+| CT-01.3 | Envelope e contagens | `Invoke-RestMethod` + inspecção de `sucesso`, `dados.Count` e total de subcategorias | `sucesso = True`; 2 categorias; 3 subcategorias | `sucesso = True`; `dados.Count = 2`; subcategorias = `3` | ✅ Aprovado |
+| CT-01.4 | Ordenação e colunas expostas | Inspecção de `dados.nome`, propriedades do objecto e nomes das subcategorias | Ordem: `Asfalto` → `Bueiro / Boca de lobo`; propriedades apenas `id, nome, icone, subcategorias` (sem `created_at`); subcategorias de Bueiro: `Entupido` → `Tampa quebrada / sem tampa` | Ordem `Asfalto` → `Bueiro / Boca de lobo`; propriedades de ambas as categorias: `id, nome, icone, subcategorias`; subcategorias de Bueiro: `Entupido` → `Tampa quebrada / sem tampa` | ✅ Aprovado |
+| CT-01.5 | Integridade do aninhamento (FK) | Filtro de subcategorias cujo `categoria_id` ≠ `id` da categoria pai | Nenhuma saída (zero inconsistências) | Nenhuma saída entre os marcadores `[inicio]` e `[fim]` | ✅ Aprovado |
+| CT-01.6 | Resiliência: tratamento de erro da base de dados | Arranque do servidor com `$env:SUPABASE_URL` inválida na sessão (sem alterar o `.env`) + `curl.exe -i`; depois, reposição do ambiente e nova requisição | `HTTP/1.1 500`; corpo `{ "sucesso": false, "mensagem": "Erro interno ao buscar categorias." }`; log do erro no terminal do servidor; com o ambiente reposto, volta a `200` | `HTTP/1.1 500`; corpo exactamente igual ao esperado; log `[categoriaController] Erro ao buscar categorias: TypeError: fetch failed`; `.env` confirmado intacto; após reposição: `HTTP 200`, `sucesso = True`, 2 categorias (contraste 200 → 500 → 200 demonstrado) | ✅ Aprovado |
+
+### 5.4 Procedimento de Execução
+
+**Terminal 1 — servidor:**
+
+```powershell
+cd backend
+npm run dev
+```
+
+**Terminal 2 — testes (a partir da raiz do repositório):**
+
+```powershell
+# CT-01.0 — A anon key está definida? (devolve apenas True/False, nunca o valor)
+Select-String -Path backend\.env -Pattern '^SUPABASE_ANON_KEY=.+' -Quiet
+
+# CT-01.1 — Servidor no ar
+Invoke-RestMethod http://localhost:3001/api/status
+
+# CT-01.2 — Status HTTP e Content-Type
+curl.exe -i http://localhost:3001/api/categorias
+
+# CT-01.3 — Envelope e contagens
+$r = Invoke-RestMethod http://localhost:3001/api/categorias
+$r | ConvertTo-Json -Depth 5
+$r.sucesso                          # esperado: True
+$r.dados.Count                      # esperado: 2
+@($r.dados.subcategorias).Count     # esperado: 3
+
+# CT-01.4 — Ordenação e colunas
+$r.dados.nome                                   # Asfalto, Bueiro / Boca de lobo
+$r.dados[0].PSObject.Properties.Name            # id, nome, icone, subcategorias
+$r.dados[1].subcategorias.nome                  # Entupido, Tampa quebrada / sem tampa
+
+# CT-01.5 — Integridade da FK (esperado: nenhuma saída)
+$r.dados | ForEach-Object { $c = $_; $c.subcategorias | Where-Object { $_.categoria_id -ne $c.id } }
+```
+
+**CT-01.6 — Simulação de erro 500.**
+
+O `dotenv` **não sobrescreve** variáveis já existentes no ambiente do processo. Assim, definir `SUPABASE_URL` na sessão do terminal antes de arrancar o servidor injecta uma URL inválida sem tocar no ficheiro `.env`. A URL continua a passar a validação *fail-fast* de `supabase.js` (não contém `SEU_PROJETO`), pelo que o servidor sobe e a falha ocorre apenas no momento da query — exactamente o cenário que o `catch` do controller deve tratar.
+
+```powershell
+# Terminal 1 — parar o servidor (Ctrl+C) e reiniciar com URL inválida
+$env:SUPABASE_URL = "https://projeto-inexistente.supabase.co"
+npm run dev
+
+# Terminal 2
+curl.exe -i http://localhost:3001/api/categorias
+
+# Terminal 1 — reposição do ambiente
+# Ctrl+C
+Remove-Item Env:SUPABASE_URL
+npm run dev
+
+# Terminal 2 — contraste: com o ambiente reposto, deve voltar a 200 (acrescentado na Execução #2)
+curl.exe -i http://localhost:3001/api/categorias
+```
+
+### 5.5 Resultado Esperado (referência)
+
+**Sucesso (200):**
+
+```json
+{
+  "sucesso": true,
+  "dados": [
+    {
+      "id": "a1b2c3d4-0001-4000-8000-000000000001",
+      "nome": "Asfalto",
+      "icone": "road-damage",
+      "subcategorias": [
+        { "id": "b1b2c3d4-0001-4000-8000-000000000001", "categoria_id": "a1b2c3d4-0001-4000-8000-000000000001", "nome": "Buraco" }
+      ]
+    },
+    {
+      "id": "a1b2c3d4-0002-4000-8000-000000000002",
+      "nome": "Bueiro / Boca de lobo",
+      "icone": "drain",
+      "subcategorias": [
+        { "id": "b1b2c3d4-0002-4000-8000-000000000002", "categoria_id": "a1b2c3d4-0002-4000-8000-000000000002", "nome": "Entupido" },
+        { "id": "b1b2c3d4-0003-4000-8000-000000000003", "categoria_id": "a1b2c3d4-0002-4000-8000-000000000002", "nome": "Tampa quebrada / sem tampa" }
+      ]
+    }
+  ]
+}
+```
+
+**Erro (500):**
+
+```json
+{
+  "sucesso": false,
+  "mensagem": "Erro interno ao buscar categorias."
+}
+```
+
+### 5.6 Evidências
+
+#### Execução #1 — 2026-10-05 (≈ 21:34–21:40 BRT)
+
+**Ambiente e CT-01.0:**
+
+```text
+> node -v; $PSVersionTable.PSVersion.ToString(); Select-String ... -Quiet
+v24.20.0
+5.1.19041.6456
+CT-01.0 -> True
+Porta 3001 em uso: False
+```
+
+**Arranque do servidor (`npm run dev`):**
+
+```text
+> zelus-backend@1.0.0 dev
+> nodemon src/server.js
+
+[nodemon] 3.1.14
+[nodemon] starting `node src/server.js`
+======================================================
+  Servidor ZELUS rodando em: http://localhost:3001
+  Endpoint de status:        http://localhost:3001/api/status
+======================================================
+```
+
+**CT-01.1:**
+
+```text
+status    : ok
+projeto   : ZELUS
+versao    : 1.0.0
+ambiente  : development
+timestamp : 2026-10-06T00:37:10.608Z
+```
+
+**CT-01.2 (configuração normal do `.env`):**
+
+```text
+HTTP/1.1 500 Internal Server Error
+X-Powered-By: Express
+Access-Control-Allow-Origin: *
+Content-Type: application/json; charset=utf-8
+Content-Length: 65
+Date: Tue, 06 Oct 2026 00:37:18 GMT
+
+{"sucesso":false,"mensagem":"Erro interno ao buscar categorias."}
+```
+
+Log do servidor no mesmo instante:
+
+```text
+[categoriaController] Erro ao buscar categorias: TypeError: fetch failed
+```
+
+**Diagnóstico da falha do CT-01.2** (nenhuma chave foi impressa; apenas o host público da URL):
+
+```text
+Host: zehdfbbceiojmwevzwbo.supabase.co | Esquema: https | Espacos/aspas extra: False
+--- DNS ---
+DNS FALHOU: zehdfbbceiojmwevzwbo.supabase.co : O nome DNS não existe
+--- HTTPS (curl.exe) ---
+HTTP 000 | tempo 0.003432s
+--- Node fetch ---
+Node fetch ERRO: ENOTFOUND getaddrinfo ENOTFOUND zehdfbbceiojmwevzwbo.supabase.co
+```
+
+Controlo — a resolução DNS geral funciona (descarta falha de rede local):
+
+```text
+Name         IPAddress
+supabase.com 216.150.1.193
+```
+
+**CT-01.6 (servidor reiniciado com `$env:SUPABASE_URL = "https://projeto-inexistente.supabase.co"`):**
+
+```text
+HTTP/1.1 500 Internal Server Error
+X-Powered-By: Express
+Access-Control-Allow-Origin: *
+Content-Type: application/json; charset=utf-8
+Content-Length: 65
+Date: Tue, 06 Oct 2026 00:39:47 GMT
+
+{"sucesso":false,"mensagem":"Erro interno ao buscar categorias."}
+--- Confirmacao: .env intacto (host original) ---
+zehdfbbceiojmwevzwbo.supabase.co
+```
+
+Log do servidor:
+
+```text
+[categoriaController] Erro ao buscar categorias: TypeError: fetch failed
+```
+
+No fim, o servidor foi parado e a variável de sessão descartada (o processo onde ela existia terminou).
+
+#### Execução #2 — 2026-10-06 (≈ 10:09–10:12 BRT)
+
+**Pré-condição corrigida:** antes desta execução, o autor corrigiu um erro de digitação no *project ref* de `SUPABASE_URL` em `backend/.env` e actualizou `SUPABASE_ANON_KEY` e `SUPABASE_SERVICE_KEY` (ver [5.7](#57-observações-e-ressalvas)). Nenhuma chave foi impressa nesta execução; apenas o host público da URL.
+
+**Ambiente, CT-01.0 e DNS do host corrigido:**
+
+```text
+v24.20.0
+5.1.19041.6456
+CT-01.0 -> True
+Porta 3001 em uso: False
+Host: zehdfbbceiojmwewzwbo.supabase.co | Esquema: https
+--- DNS ---
+Name                             IPAddress
+----                             ---------
+zehdfbbceiojmwewzwbo.supabase.co 172.64.149.246
+zehdfbbceiojmwewzwbo.supabase.co 104.18.38.10
+```
+
+**Arranque do servidor (`npm run dev`):**
+
+```text
+> zelus-backend@1.0.0 dev
+> nodemon src/server.js
+
+[nodemon] 3.1.14
+[nodemon] starting `node src/server.js`
+======================================================
+  Servidor ZELUS rodando em: http://localhost:3001
+  Endpoint de status:        http://localhost:3001/api/status
+======================================================
+```
+
+**CT-01.1:**
+
+```text
+status    : ok
+projeto   : ZELUS
+versao    : 1.0.0
+ambiente  : development
+timestamp : 2026-10-06T13:10:15.927Z
+```
+
+**CT-01.2:**
+
+```text
+HTTP/1.1 200 OK
+X-Powered-By: Express
+Access-Control-Allow-Origin: *
+Content-Type: application/json; charset=utf-8
+Content-Length: 610
+ETag: W/"262-XMqSxKCGLrKcJ2IR22VkF8sPSH4"
+Date: Tue, 06 Oct 2026 13:10:17 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"sucesso":true,"dados":[{"id":"a1b2c3d4-0001-4000-8000-000000000001","nome":"Asfalto","icone":"road-damage","subcategorias":[{"id":"b1b2c3d4-0001-4000-8000-000000000001","categoria_id":"a1b2c3d4-0001-4000-8000-000000000001","nome":"Buraco"}]},{"id":"a1b2c3d4-0002-4000-8000-000000000002","nome":"Bueiro / Boca de lobo","icone":"drain","subcategorias":[{"id":"b1b2c3d4-0002-4000-8000-000000000002","categoria_id":"a1b2c3d4-0002-4000-8000-000000000002","nome":"Entupido"},{"id":"b1b2c3d4-0003-4000-8000-000000000003","categoria_id":"a1b2c3d4-0002-4000-8000-000000000002","nome":"Tampa quebrada / sem tampa"}]}]}
+```
+
+O corpo devolvido é idêntico ao [Resultado Esperado](#55-resultado-esperado-referência) da secção 5.5.
+
+**CT-01.3:**
+
+```text
+sucesso: True
+dados.Count: 2
+subcategorias: 3
+```
+
+**CT-01.4:**
+
+```text
+-- dados.nome:
+Asfalto
+Bueiro / Boca de lobo
+-- propriedades dados[0]:
+id
+nome
+icone
+subcategorias
+-- propriedades dados[1]:
+id
+nome
+icone
+subcategorias
+-- subcategorias de dados[1]:
+Entupido
+Tampa quebrada / sem tampa
+```
+
+**CT-01.5 (esperado: nenhuma saída entre os marcadores):**
+
+```text
+[inicio]
+[fim]
+```
+
+**CT-01.6 — fase 500 (servidor reiniciado com `$env:SUPABASE_URL = "https://projeto-inexistente.supabase.co"`):**
+
+```text
+HTTP/1.1 500 Internal Server Error
+X-Powered-By: Express
+Access-Control-Allow-Origin: *
+Content-Type: application/json; charset=utf-8
+Content-Length: 65
+ETag: W/"41-Skxx9tOIrb4uMSAgZx/MLzeCk+Y"
+Date: Tue, 06 Oct 2026 13:10:57 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"sucesso":false,"mensagem":"Erro interno ao buscar categorias."}
+--- Confirmacao: .env intacto (host original) ---
+zehdfbbceiojmwewzwbo.supabase.co
+```
+
+Log do servidor:
+
+```text
+[categoriaController] Erro ao buscar categorias: TypeError: fetch failed
+```
+
+**CT-01.6 — fase de reposição (servidor reiniciado sem a variável de sessão):**
+
+```text
+SUPABASE_URL na sessao: False
+...
+HTTP 200 | Content-Type: application/json; charset=utf-8 | 610 bytes
+sucesso: True | categorias: 2
+```
+
+No fim, o servidor foi parado e confirmou-se que a porta `3001` ficou livre.
+
+### 5.7 Observações e Ressalvas
+
+- **Fallback silencioso da anon key** — em `backend/src/config/supabase.js` (linha 75), o `supabaseClient` é criado com `SUPABASE_ANON_KEY || SUPABASE_SERVICE_KEY`. Se a anon key estiver ausente, o cliente "público" passa a usar a **service_role key**, que ignora o RLS. Nesse cenário, este teste continuaria a passar, mas por um motivo errado (privilégio máximo em vez de leitura pública). O `CT-01.0` mitiga o risco no contexto do teste. **Decisão:** manter registado como ressalva; ajuste a avaliar numa etapa futura de refactoração.
+
+- **[Execução #1] Host do Supabase sem registo DNS (causa da reprovação do CT-01.2)** — o host configurado em `SUPABASE_URL` (`zehdfbbceiojmwevzwbo.supabase.co`) devolve *NXDOMAIN* ("O nome DNS não existe"), enquanto `supabase.com` resolve normalmente. **Não é um defeito do código da rota**: a requisição nem chega à base de dados. Hipóteses, da mais à menos provável:
+  1. O projecto Supabase foi **pausado** (o plano gratuito pausa projectos após um período de inactividade, e o subdomínio deixa de resolver);
+  2. O projecto foi **eliminado** ou recriado com outro *project ref*;
+  3. O *project ref* no `.env` tem um **erro de digitação**.
+
+  **Acção necessária:** no Supabase Dashboard, confirmar o estado do projecto (restaurar se estiver pausado) e comparar o *Project URL* em *Settings › API* com o valor no `.env`. Depois, **reexecutar o Teste 01 completo** (Execução #2).
+
+  > **→ Resolvido na Execução #2 (2026-10-06):** confirmou-se a hipótese 3 (erro de digitação). Ver a entrada *"[Execução #2] Causa raiz confirmada e resolvida"* abaixo.
+
+- **[Execução #1] Ressalva do CT-01.6** — o tratamento de erro comportou-se exactamente como especificado. Mas, como na Execução #1 a configuração normal também falhava, o CT-01.6 ainda não pôde mostrar o contraste entre 200 (configuração válida) e 500 (configuração inválida). Deve ser confirmado de novo na Execução #2.
+
+  > **→ Resolvido na Execução #2 (2026-10-06):** o contraste **200 → 500 → 200** ficou demonstrado (configuração válida → URL inválida na sessão → ambiente reposto). O CT-01.6 passa de ⚠️ a ✅.
+
+- **[Execução #1] Diagnóstico pobre no log de erro** — o controller regista apenas `erro.message` (`TypeError: fetch failed`), que esconde a causa real disponível em `erro.cause` (`ENOTFOUND ...`). Foi preciso um diagnóstico manual para a identificar. **Sugestão (não aplicada):** numa refactoração futura, registar também `erro.cause` no `console.error` do controller.
+
+  > **Estado na Execução #2:** continua em aberto. O log do CT-01.6 mostrou de novo apenas `TypeError: fetch failed`.
+
+- **[Execução #2] Causa raiz confirmada e resolvida** — a falha da Execução #1 vinha de um **erro de digitação no *project ref*** de `SUPABASE_URL` em `backend/.env`: um `v` no lugar de um `w`.
+
+  | | Host |
+  |---|---|
+  | Errado (Execução #1) | `zehdfbbceiojmwe`**`v`**`zwbo.supabase.co` → *NXDOMAIN* |
+  | Correcto (Execução #2) | `zehdfbbceiojmwe`**`w`**`zwbo.supabase.co` → resolve (`172.64.149.246`, `104.18.38.10`) |
+
+  O autor corrigiu a URL e actualizou também `SUPABASE_ANON_KEY` e `SUPABASE_SERVICE_KEY`, depois de validar manualmente `GET /api/categorias` (HTTP 200). O código da rota não precisou de alteração, o que confirma o diagnóstico da Execução #1: o defeito era de configuração, não de código.
+
+  **Lição aprendida:** o diagnóstico DNS por camadas (DNS → HTTPS → Node fetch, mais um controlo com `supabase.com`) isolou o problema no host configurado. Um *project ref* é uma cadeia aleatória de 20 caracteres, onde `v`/`w` se confundem com facilidade. **Boa prática:** copiar sempre o *Project URL* directamente de *Settings › API* no Supabase Dashboard, nunca escrevê-lo à mão.
+
+- **Ressalvas que continuam em aberto após a Execução #2:** o *fallback* silencioso da anon key e o diagnóstico pobre no log de erro (ambos acima). Nenhuma delas afecta o resultado do Teste 01; ficam para uma refactoração futura.
+
+### 5.8 Histórico de Execuções do Teste 01
+
+| Data | Executado por | Resultado global |
+|---|---|---|
+| 2026-10-05 (Execução #1) | Agente Antigravity IDE (autorizado por Thiago Cid) | ❌ Reprovado — CT-01.0, 01.1 ✅; CT-01.6 ⚠️; CT-01.2 ❌ (Supabase sem DNS); CT-01.3–01.5 🚫 |
+| 2026-10-06 (Execução #2) | Agente Antigravity IDE (autorizado por Thiago Cid) | ✅ Aprovado — CT-01.0 a CT-01.6 todos ✅ (causa da Execução #1 corrigida: erro de digitação em `SUPABASE_URL`) |
+
+---
+
+## 6. Modelo para Novos Testes
+
+> Copiar a estrutura abaixo para cada nova rota, incrementando o número `NN`.
+
+```markdown
+## N. Teste NN — Rota `MÉTODO /api/recurso`
+
+### N.1 Objetivo
+### N.2 Pré-condições
+### N.3 Casos de Teste
+| CT | O que se testa | Como se testa | Resultado esperado | Resultado obtido | Estado |
+|---|---|---|---|---|---|
+| CT-NN.1 | | | | — | ⏳ Pendente |
+### N.4 Procedimento de Execução
+### N.5 Resultado Esperado (referência)
+### N.6 Evidências
+### N.7 Observações e Ressalvas
+### N.8 Histórico de Execuções do Teste NN
+```
+
+---
+
+## 7. Histórico de Revisões
+
+| Versão | Data | Alteração |
+|---|---|---|
+| 1.0.0 | 2026-10-05 | Criação do documento, metodologia e estrutura do Teste 01 (estado inicial: ⏳ Pendente) |
+| 1.1.0 | 2026-10-05 | Execução #1 do Teste 01: resultados, evidências e diagnóstico registados; novo estado 🚫 Bloqueado na metodologia; ambiente preenchido |
+| 1.2.0 | 2026-10-06 | Execução #2 do Teste 01: **✅ Aprovado** (7/7); causa raiz registada (erro de digitação no *project ref* de `SUPABASE_URL`); CT-01.6 com contraste 200 → 500 → 200; observações da Execução #1 marcadas como resolvidas, sem apagar o histórico |

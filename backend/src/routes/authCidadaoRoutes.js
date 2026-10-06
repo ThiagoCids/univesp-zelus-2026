@@ -6,4 +6,8 @@ const authCidadaoController = require('../controllers/authCidadaoController');
 // POST /api/auth/cidadao/registro
 router.post('/registro', authCidadaoController.registrarCidadao);
 
+// Rota para login do cidadão
+// POST /api/auth/cidadao/login
+router.post('/login', authCidadaoController.loginCidadao);
+
 module.exports = router;

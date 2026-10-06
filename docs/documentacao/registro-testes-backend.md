@@ -1,7 +1,7 @@
 # Registo Oficial de Testes — Backend ZELUS
 
 **Tipo de documento:** Documento vivo (*living document*)  
-**Versão:** 1.3.0  
+**Versão:** 1.4.0  
 **Última actualização:** 2026-10-06  
 **Responsável:** Thiago Cid  
 **Projecto:** ZELUS — Projecto Integrador UNIVESP 2026
@@ -79,6 +79,7 @@ Um `Teste NN` só é considerado **Aprovado** quando **todos** os seus casos `CT
 |---|---|---|---|
 | [Teste 01](#5-teste-01--rota-get-apicategorias) | `GET /api/categorias` | 2026-10-06 (Execução #2) | ✅ Aprovado — 7/7 casos aprovados (Execução #1 de 2026-10-05: ❌ Reprovado por bloqueio de infra-estrutura — ver [5.8](#58-histórico-de-execuções-do-teste-01)) |
 | [Teste 02](#6-teste-02--rota-post-apiauthcidadaoregistro) | `POST /api/auth/cidadao/registro` | 2026-10-06 | ✅ Aprovado — 3/3 casos aprovados |
+| [Teste 03](#7-teste-03--rota-post-apiauthcidadaologin) | `POST /api/auth/cidadao/login` | 2026-10-06 | ✅ Aprovado — 4/4 casos aprovados |
 
 ---
 
@@ -569,7 +570,73 @@ Nenhuma ressalva de segurança ou comportamento. A criptografia está funcionand
 
 ---
 
-## 7. Histórico de Revisões
+## 7. Teste 03 — Rota `POST /api/auth/cidadao/login`
+
+### 7.1 Objetivo
+
+Validar o processo de autenticação de cidadãos previamente cadastrados, garantindo o tratamento adequado para campos ausentes, utilizadores inexistentes, senhas inválidas (com mensagens genéricas por questões de segurança cibernética) e a emissão correcta de tokens JWT (com supressão da senha na resposta) num cenário de sucesso.
+
+**Ficheiros sob teste:**
+- `backend/src/controllers/authCidadaoController.js`
+- `backend/src/routes/authCidadaoRoutes.js`
+
+### 7.2 Pré-condições
+
+- Servidor iniciado (`npm run dev`) escutando na porta `3001`.
+- Acesso ativo ao banco de dados Supabase via `SUPABASE_URL` e `SUPABASE_SERVICE_KEY` válidas no `.env`.
+- Variável `JWT_SECRET` devidamente configurada no `.env` local.
+- Existência do utilizador `João da Silva` (CPF: `12345678901`, Senha: `senhaSecreta123`) na tabela `cidadaos` (inserido durante o Teste 02).
+
+### 7.3 Casos de Teste
+
+| CT | O que se testa | Como se testa | Resultado esperado | Resultado obtido | Estado |
+|---|---|---|---|---|---|
+| CT-03.1 | Rejeição por campos incompletos | Requisição POST sem a `senha` | `HTTP 400 Bad Request`; `sucesso: false` | `HTTP 400 Bad Request`; `sucesso: false` | ✅ Aprovado |
+| CT-03.2 | CPF inexistente | Requisição POST com um CPF que não está no banco | `HTTP 401 Unauthorized`; mensagem genérica | `HTTP 401 Unauthorized`; mensagem genérica | ✅ Aprovado |
+| CT-03.3 | Senha incorreta | Requisição POST com CPF válido e senha errada | `HTTP 401 Unauthorized`; mensagem genérica idêntica ao CT-03.2 | `HTTP 401 Unauthorized`; mensagem genérica | ✅ Aprovado |
+| CT-03.4 | Login com sucesso | Requisição POST com as credenciais válidas do João | `HTTP 200 OK`; `token` JWT gerado e devolução dos `dados` sem a senha | `HTTP 200 OK`; `token` gerado, dados retornados sem senha | ✅ Aprovado |
+
+### 7.4 Procedimento de Execução
+
+- CT-03.1 executado via curl (falta a senha).
+- CT-03.2 executado via curl (CPF não cadastrado).
+- CT-03.3 executado via curl (Senha incorreta para CPF válido).
+- CT-03.4 executado via curl (Dados válidos).
+
+### 7.5 Resultado Esperado (referência)
+
+**CT-03.1 (Erro 400):**
+`{"sucesso": false, "mensagem": "CPF e senha são obrigatórios."}`
+
+**CT-03.2 e CT-03.3 (Erro 401):**
+`{"sucesso": false, "mensagem": "Credenciais inválidas."}`
+
+**CT-03.4 (Sucesso 200):**
+`{"sucesso": true, "mensagem": "Login realizado com sucesso.", "token": "eyJhbGciOi...", "dados": {...}}` (senha omitida)
+
+### 7.6 Evidências
+
+Todos os testes foram executados e validados no Windows PowerShell através do `curl.exe`.
+
+- **CT-03.1:** A API respondeu `400 Bad Request` indicando "CPF e senha são obrigatórios.".
+- **CT-03.2 e CT-03.3:** Ambos responderam idênticos com `401 Unauthorized` ("Credenciais inválidas."), evitando enumeration attack.
+- **CT-03.4:** Respondeu `200 OK` gerando o payload esperado, o JWT `token` válido na resposta, e excluiu a `senha` (o ID retornado combinava perfeitamente com o ID gerado no CT-02.2).
+
+### 7.7 Observações e Ressalvas
+
+Os critérios de segurança estabelecidos foram amplamente validados:
+- A criptografia bcrypt consegue comparar a senha nativa corretamente com a hash armazenada no BD via `supabaseAdmin`.
+- O JWT_SECRET local configurado é assinado e funciona de forma satisfatória sem bloqueios (stateless auth).
+
+### 7.8 Histórico de Execuções do Teste 03
+
+| Data | Executado por | Resultado global |
+|---|---|---|
+| 2026-10-06 | Agente Antigravity | ✅ Aprovado (4/4 casos validados) |
+
+---
+
+## 8. Histórico de Revisões
 
 | Versão | Data | Alteração |
 |---|---|---|
@@ -577,3 +644,4 @@ Nenhuma ressalva de segurança ou comportamento. A criptografia está funcionand
 | 1.1.0 | 2026-10-05 | Execução #1 do Teste 01: resultados, evidências e diagnóstico registados; novo estado 🚫 Bloqueado na metodologia; ambiente preenchido |
 | 1.2.0 | 2026-10-06 | Execução #2 do Teste 01: **✅ Aprovado** (7/7); causa raiz registada (erro de digitação no *project ref* de `SUPABASE_URL`); CT-01.6 com contraste 200 → 500 → 200; observações da Execução #1 marcadas como resolvidas, sem apagar o histórico |
 | 1.3.0 | 2026-10-06 | Inclusão do Teste 02 (Rota `POST /api/auth/cidadao/registro`) com status pendente |
+| 1.4.0 | 2026-10-06 | Inclusão do Teste 03 (Rota `POST /api/auth/cidadao/login`) com status pendente |

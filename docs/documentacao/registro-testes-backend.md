@@ -83,6 +83,7 @@ Um `Teste NN` só é considerado **Aprovado** quando **todos** os seus casos `CT
 | [Teste 04](#8-teste-04--rota-post-apiauthfuncionariologin) | `POST /api/auth/funcionario/login` | 2026-10-06 | ✅ Aprovado — 4/4 casos aprovados |
 | [Teste 05](#10-teste-05--rota-get-apicategorias-protegida) | `GET /api/categorias` | 2026-10-06 | ✅ Aprovado — 3/3 casos aprovados |
 | [Teste 06](#11-teste-06--rota-post-apisolicitacoes-abertura-e-filtro-10m) | `POST /api/solicitacoes` | 2026-10-07 | ✅ Aprovado — 3/3 casos aprovados |
+| [Teste 07](#12-teste-07--rotas-administrativas-de-solicitacoes-read-e-update) | `GET & PATCH /api/solicitacoes/admin` | 2026-10-07 | ✅ Aprovado — 3/3 casos aprovados |
 
 ---
 
@@ -758,3 +759,24 @@ Validar a criação de novas ocorrências via rota protegida e testar a rigorosi
   * *Ação:* Enviar o mesmo problema, mudando levemente a latitude para -21.2350 (distância > 10m).
   * *Esperado:* Retorno `201 Created`, passando pelo filtro de bloqueio.
   * *Status:* ✅ Aprovado
+
+---
+
+## 12. Teste 07 — Rotas Administrativas de Solicitações (Read e Update)
+**Status Geral:** ✅ Aprovado
+
+### Objetivos:
+Validar a segurança RBAC (dupla blindagem) que impede cidadãos de visualizarem o painel administrativo, testar a extração relacional de dados na listagem e confirmar a funcionalidade de atualização de status com rastreabilidade (auditoria).
+
+* **CT-07.1: Bloqueio de acesso cidadão.**
+  * *Ação:* Enviar requisição GET para `/api/solicitacoes/admin` utilizando o token de um Cidadão autenticado.
+  * *Esperado:* Retorno `403 Forbidden` informando que a rota é exclusiva para funcionários.
+  * *Status:* ✅ Aprovado
+* **CT-07.2: Listagem com sucesso.**
+  * *Ação:* Enviar requisição GET para `/api/solicitacoes/admin` utilizando o token de Funcionário.
+  * *Esperado:* Retorno `200 OK` com o array de solicitações ordenado contendo os campos relacionais (nome do cidadão e nome da subcategoria).
+  * *Status:* ✅ Aprovado
+* **CT-07.3: Atualização de status.**
+  * *Ação:* Enviar requisição PATCH para `/api/solicitacoes/:id/status` (usando o ID extraído dinamicamente no CT-07.2) com payload `{ "status": "Em Andamento" }` e token de Funcionário.
+  * *Esperado:* Retorno `200 OK`, validando a alteração de status atómica e a persistência do rastro sem quebra da API.
+  * *Status:* ⏳ Pendente

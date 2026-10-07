@@ -54,6 +54,10 @@ app.use('/api/auth/cidadao', authCidadaoRoutes);
 const authFuncionarioRoutes = require('./routes/authFuncionarioRoutes');
 app.use('/api/auth/funcionario', authFuncionarioRoutes);
 
+// -- Rotas de Solicitações --
+const solicitacaoRoutes = require('./routes/solicitacaoRoutes');
+app.use('/api/solicitacoes', solicitacaoRoutes);
+
 // -- Rota de Saúde (Health Check) --
 // Endpoint de teste para confirmar que o servidor está no ar.
 // Acesse: GET http://localhost:3001/api/status

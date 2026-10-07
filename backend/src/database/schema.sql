@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS public.solicitacoes (
     cidadao_id UUID NOT NULL REFERENCES public.cidadaos(id) ON DELETE RESTRICT,
     subcategoria_id UUID NOT NULL REFERENCES public.subcategorias(id) ON DELETE RESTRICT,
     funcionario_id UUID REFERENCES public.funcionarios(id) ON DELETE SET NULL,
+    descricao TEXT NOT NULL,
     rua VARCHAR(255) NOT NULL,
     numero VARCHAR(20),
     ponto_referencia VARCHAR(255),

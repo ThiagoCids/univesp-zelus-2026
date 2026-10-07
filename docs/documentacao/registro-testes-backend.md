@@ -82,6 +82,7 @@ Um `Teste NN` só é considerado **Aprovado** quando **todos** os seus casos `CT
 | [Teste 03](#7-teste-03--rota-post-apiauthcidadaologin) | `POST /api/auth/cidadao/login` | 2026-10-06 | ✅ Aprovado — 4/4 casos aprovados |
 | [Teste 04](#8-teste-04--rota-post-apiauthfuncionariologin) | `POST /api/auth/funcionario/login` | 2026-10-06 | ✅ Aprovado — 4/4 casos aprovados |
 | [Teste 05](#10-teste-05--rota-get-apicategorias-protegida) | `GET /api/categorias` | 2026-10-06 | ✅ Aprovado — 3/3 casos aprovados |
+| [Teste 06](#11-teste-06--rota-post-apisolicitacoes-abertura-e-filtro-10m) | `POST /api/solicitacoes` | 2026-10-07 | ✅ Aprovado — 3/3 casos aprovados |
 
 ---
 
@@ -736,3 +737,24 @@ Validar que a rota de categorias (Menu de Problemas) está devidamente protegida
 - **CT-05.3**: Acesso com token válido no header `Authorization: Bearer <token>`.
   - **Status**: ✅ Aprovado
   - **Esperado**: Código HTTP `200 OK` com JSON `{ sucesso: true, dados: [...] }`, onde `dados` representa a árvore de categorias com as suas respetivas subcategorias.
+
+---
+
+## 11. Teste 06 — Rota POST /api/solicitacoes (Abertura e Filtro 10m)
+**Status Geral:** ✅ Aprovado
+
+### Objetivos:
+Validar a criação de novas ocorrências via rota protegida e testar a rigorosidade do filtro anti-duplicidade geográfico (limite de 10 metros).
+
+* **CT-06.1: Criação de solicitação com sucesso.**
+  * *Ação:* Enviar token válido e um payload estruturado para Pradópolis (Latitude: -21.2345).
+  * *Esperado:* Retorno `201 Created` e a geração do `protocolo` da ocorrência.
+  * *Status:* ✅ Aprovado
+* **CT-06.2: Bloqueio do filtro anti-duplicidade.**
+  * *Ação:* Enviar novamente a mesma requisição (mesma subcategoria e mesmas coordenadas exatas do CT-06.1).
+  * *Esperado:* Retorno `409 Conflict` com aviso de problema registado a menos de 10 metros.
+  * *Status:* ✅ Aprovado
+* **CT-06.3: Criação de solicitação próxima, mas fora do raio de 10m.**
+  * *Ação:* Enviar o mesmo problema, mudando levemente a latitude para -21.2350 (distância > 10m).
+  * *Esperado:* Retorno `201 Created`, passando pelo filtro de bloqueio.
+  * *Status:* ✅ Aprovado

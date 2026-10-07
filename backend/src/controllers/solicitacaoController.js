@@ -105,6 +105,39 @@ const criarSolicitacao = async (req, res) => {
 };
 
 /**
+ * Rota do Cidadão (Read): Lista exclusivamente as solicitações abertas pelo utilizador autenticado.
+ * Garante o isolamento de dados (Data Privacy).
+ */
+const listarMinhasSolicitacoes = async (req, res) => {
+    try {
+        // O ID é extraído de forma segura e inquestionável do JWT
+        const cidadao_id = req.usuario.id;
+
+        // SELECT com filtro estrito para impedir vazamento de dados de outros cidadãos
+        const { data: minhasSolicitacoes, error } = await supabaseAdmin
+            .from('solicitacoes')
+            .select(`
+                *,
+                subcategorias (nome)
+            `)
+            .eq('cidadao_id', cidadao_id)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        return res.status(200).json({
+            sucesso: true,
+            mensagem: 'Histórico de solicitações carregado com sucesso.',
+            dados: minhasSolicitacoes
+        });
+
+    } catch (error) {
+        console.error('Erro ao listar histórico do cidadão:', error);
+        return res.status(500).json({ sucesso: false, mensagem: 'Erro interno ao tentar carregar o histórico.' });
+    }
+};
+
+/**
  * Rota Administrativa (Read): Lista todas as solicitações para o Painel da Prefeitura.
  * Traz os relacionamentos com cidadão e subcategoria, ordenadas pelas mais recentes.
  */
@@ -140,7 +173,7 @@ const listarSolicitacoesAdmin = async (req, res) => {
 const atualizarStatus = async (req, res) => {
     try {
         const { id } = req.params;
-        const { status } = req.body;
+        const { status, justificativa_status } = req.body;
         
         // O ID do funcionário vem do token JWT, extraído pelo middleware
         const funcionario_id = req.usuario.id;
@@ -149,27 +182,50 @@ const atualizarStatus = async (req, res) => {
             return res.status(400).json({ sucesso: false, mensagem: 'O novo status é obrigatório.' });
         }
 
-        // 1. Atualizar o Status na tabela solicitacoes
+        // Nova Regra de Negócio: Exigência de justificativa para descarte
+        if (status === 'Descartada' && (!justificativa_status || justificativa_status.trim() === '')) {
+            return res.status(400).json({ 
+                sucesso: false, 
+                mensagem: 'A justificativa é obrigatória ao descartar uma solicitação.' 
+            });
+        }
+
+        // 1. Preparar o payload de atualização
+        const payloadUpdate = { 
+            status, 
+            updated_at: new Date() 
+        };
+        // Se a justificativa foi enviada, adicionamos ao payload
+        if (justificativa_status !== undefined) {
+            payloadUpdate.justificativa_status = justificativa_status;
+        }
+
+        // 2. Atualizar na tabela solicitacoes
         const { data: solicitacaoAtualizada, error: erroUpdate } = await supabaseAdmin
             .from('solicitacoes')
-            .update({ status, updated_at: new Date() })
+            .update(payloadUpdate)
             .eq('id', id)
             .select()
             .single();
 
         if (erroUpdate) throw erroUpdate;
 
-        // 2. Registar a rastreabilidade na tabela de auditoria (audit_logs)
+        // 3. Montar a string descritiva da auditoria
+        let acaoAuditoria = `Status alterado para '${status}'`;
+        if (justificativa_status && justificativa_status.trim() !== '') {
+            acaoAuditoria += ` - Justificativa: ${justificativa_status}`;
+        }
+
+        // 4. Registar a rastreabilidade na tabela de auditoria (audit_logs)
         const { error: erroAudit } = await supabaseAdmin
             .from('audit_logs')
             .insert([{
                 solicitacao_id: id,
                 funcionario_id: funcionario_id,
-                acao: `Status alterado para '${status}'`
+                acao: acaoAuditoria
             }]);
 
         if (erroAudit) {
-            // Em cenários críticos de produção, regista-se no logger central sem quebrar a API
             console.warn('Alerta: O status foi alterado, mas houve um erro ao gravar o log de auditoria:', erroAudit);
         }
 
@@ -187,6 +243,7 @@ const atualizarStatus = async (req, res) => {
 
 module.exports = {
     criarSolicitacao,
+    listarMinhasSolicitacoes,
     listarSolicitacoesAdmin,
     atualizarStatus
 };

@@ -9,6 +9,7 @@ const { verificarToken, verificarFuncionario } = require('../middlewares/authMid
 // Rotas Públicas Autorizadas (Cidadão)
 // ==========================================
 router.post('/', verificarToken, solicitacaoController.criarSolicitacao);
+router.get('/minhas', verificarToken, solicitacaoController.listarMinhasSolicitacoes);
 
 // ==========================================
 // Rotas Administrativas (Painel Prefeitura)

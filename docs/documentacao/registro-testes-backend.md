@@ -84,6 +84,7 @@ Um `Teste NN` só é considerado **Aprovado** quando **todos** os seus casos `CT
 | [Teste 05](#10-teste-05--rota-get-apicategorias-protegida) | `GET /api/categorias` | 2026-10-06 | ✅ Aprovado — 3/3 casos aprovados |
 | [Teste 06](#11-teste-06--rota-post-apisolicitacoes-abertura-e-filtro-10m) | `POST /api/solicitacoes` | 2026-10-07 | ✅ Aprovado — 3/3 casos aprovados |
 | [Teste 07](#12-teste-07--rotas-administrativas-de-solicitacoes-read-e-update) | `GET & PATCH /api/solicitacoes/admin` | 2026-10-07 | ✅ Aprovado — 3/3 casos aprovados |
+| [Teste 08](#13-teste-08--historico-privado-e-validacao-de-descarte) | `GET /minhas` & `PATCH /:id/status` | 2026-10-07 | ✅ Aprovado — 3/3 casos aprovados |
 
 ---
 
@@ -779,4 +780,25 @@ Validar a segurança RBAC (dupla blindagem) que impede cidadãos de visualizarem
 * **CT-07.3: Atualização de status.**
   * *Ação:* Enviar requisição PATCH para `/api/solicitacoes/:id/status` (usando o ID extraído dinamicamente no CT-07.2) com payload `{ "status": "Em Andamento" }` e token de Funcionário.
   * *Esperado:* Retorno `200 OK`, validando a alteração de status atómica e a persistência do rastro sem quebra da API.
-  * *Status:* ⏳ Pendente
+  * *Status:* ✅ Aprovado
+
+---
+
+## 13. Teste 08 — Histórico Privado e Validação de Descarte
+**Status Geral:** ✅ Aprovado
+
+### Objetivos:
+Homologar o isolamento de dados na consulta de histórico do Cidadão e validar a integridade da nova regra de negócio que obriga o preenchimento de justificativa ao descartar uma solicitação por parte da autarquia.
+
+* **CT-08.1: Histórico Privado.**
+  * *Ação:* Enviar requisição GET para `/api/solicitacoes/minhas` utilizando o token do Cidadão.
+  * *Esperado:* Retorno `200 OK` e listagem exclusiva das ocorrências registadas por esse utilizador (Isolamento de Dados).
+  * *Status:* ✅ Aprovado
+* **CT-08.2: Descarte Inválido.**
+  * *Ação:* Enviar requisição PATCH para `/api/solicitacoes/:id/status` utilizando token de Funcionário, com o payload `{ "status": "Descartada" }`.
+  * *Esperado:* Retorno `400 Bad Request` devido à ausência do campo `justificativa_status`.
+  * *Status:* ✅ Aprovado
+* **CT-08.3: Descarte Válido.**
+  * *Ação:* Enviar requisição PATCH para a mesma rota com token de Funcionário, passando `{ "status": "Descartada", "justificativa_status": "A rua consta como propriedade privada no plano diretor." }`.
+  * *Esperado:* Retorno `200 OK`, validando a regra de negócio e a persistência na tabela e no log de auditoria.
+  * *Status:* ✅ Aprovado
